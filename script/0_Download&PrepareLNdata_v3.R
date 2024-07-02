@@ -304,6 +304,10 @@ save(d_obs, file="data/d_obs2.rds")
 
 #******** Start Load and prepare Covariates **************************************
 
+# load ptarmigan data
+load("data/d_trans2.rds")
+load("data/d_obs2.rds")
+
 # load spatial covariate (onsetS, max NDVI, OnsetF, Anomaly, rr, tg)
 all_vars<-tibble(read.csv("data/all_vars.csv"))
 #load('data/d_trans.rds')
@@ -450,6 +454,54 @@ carc <- tibble(read.csv2("data/TOTV13062023130101337.csv")) %>%
 # compared to henden et al, and its similar
 plot(carc, type='b')
 
+#----------------------------------------------
+# Rodent data
+
+# East
+rodOst <- tibble(read.delim("data/storskala_04-23spring.txt")) %>% 
+  filter(season=="spring") %>%
+  mutate(rod=Mruf)%>%
+  dplyr::select(c(year, rod))%>%
+  group_by(year)%>%
+  summarise(rodO = sum(rod))
+
+# replace the missing first years with the mean for all years in region east
+rodOst2 <- tibble(year=2000:2003, rodO=rep(mean(rodOst$rodO), times=4))
+
+# bind replace missing data to the real dataset
+rodOst3 <- rbind(rodOst2, rodOst)
+
+# make year a character
+rodOst3$year <- as.character(rodOst3$year)
+
+#Inner
+rodInnerVest <- tibble(read.table("data/porsanger_mus_reg_2023.csv", sep=",", header=T)) %>%
+  filter(seas=="SPRING")%>%
+  dplyr::select(c(year,  rufoCold, rufoSold))
+
+# make year a character
+rodInnerVest$year <- as.character(rodInnerVest$year) 
+
+# West  
+rod1 <- rodOst3 %>% 
+  right_join( rodInnerVest,  by=join_by(year))%>%
+  left_join( rodOst3,   by=join_by(year))%>%
+  dplyr::select(!year)%>% as.matrix()
+
+# scale and put in array
+rod3 <- scale(array(rod1, dim=c(24,4)))
+
+# some tricksing because GBIF did not respond
+load("data/RypeData_GBIF00-23_v3.rds")
+#N_obs <- 5339 
+N_line_year <- input.data$y
+N_yearsTot <- input.data$T
+A <- input.data$area
+dclass <- input.data$dclass
+temp_dist <- data.frame(site=input.data$site)
+dist <- input.data$dist
+N_sites <- input.data$nsites
+
 #------------------------------------------
   ## Assembling all data in a list for JAGS
   input.data <- list(
@@ -476,10 +528,12 @@ plot(carc, type='b')
     rr = rr2,
     tg =tg2,
     carc=carc,
-    anom=anom2
+    anom=anom2,
+    rod = rod3
   )
 
 # save inputdata    
-save(input.data, file = "data/RypeData_GBIF00-23_v3.rds")
+save(input.data, file = "data/RypeData_GBIF00-23_v4.rds")
 
 #--- End of script
+
