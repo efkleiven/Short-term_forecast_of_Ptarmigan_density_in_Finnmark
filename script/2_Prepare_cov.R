@@ -1,11 +1,15 @@
 # load covariates and prepare for JAGS
 
 # load info about transect and observations
-load("data/d_obs.rds")
-load("data/d_trans.rds")
+load("./data/d_trans_2.rds")
+load("./data/d_obs_2.rds")
+
+d_obs <- d_obs2
+d_trans <- d_trans2
 
 # load spatial covariate (onsetS, max NDVI, OnsetF, Anomaly, rr, tg)
 all_vars <- tibble(read.csv("./data/all_vars.csv"))
+max(all_vars$year)
 
 # manaually replacing names in d_trans to be in line with all_vars
 d_trans$locality <- replace(d_trans$locality, d_trans$locality=="Karasjok Aitevarri","Aitevarri" )
@@ -97,10 +101,10 @@ for(i in 1:nrow(anom)){
 }
 
 # replace NA with 0
-anom2[is.na(anom2)] <- 0 # should I replace with 0 or mean(anom2, na.rm=T)?
+anom2[is.na(anom2)] <- 0.01 # should I replace with 0 or mean(anom2, na.rm=T)?
 
 # harvest 
-harv <- tibble(read.delim("./data/HarvestTotal2000-2023.txt")) %>%
+harv <- tibble(read.delim("./data/HarvestTotal2000-2024.txt")) %>%
   mutate(harv = FelteWpt/Areal) %>%
   dplyr::select(!c(Region, Jaktdager, Areal, FelteWpt))
 
@@ -108,13 +112,16 @@ harv <- tibble(read.delim("./data/HarvestTotal2000-2023.txt")) %>%
 print(harv, n=1000)
 
 # manually replace missing values
-harv$harv[213:216] <- harv$harv[117:120] # replaced based on location after manual check
+harv$harv[221:225] <- harv$harv[121:125] # replaced missing harv for kvalsund with hammerfest
 
 # standardize names
-harv$Kommune[harv$Kommune=="Vadso"]  <- "VadsÃ¸"
-harv$Kommune[harv$Kommune=="Vardo"]  <- "VardÃ¸"
-harv$Kommune[harv$Kommune=="Sorvar"] <- "SÃ¸r-Varanger"
-harv$Kommune[harv$Kommune=="Masoy"]  <- "MÃ¥sÃ¸y"
+unique(harv$Kommune)
+unique(dat$municipality)
+
+harv$Kommune[harv$Kommune=="Vadso"]  <- "Vadsø"
+harv$Kommune[harv$Kommune=="Vardo"]  <- "Vardø"
+harv$Kommune[harv$Kommune=="Sorvar"] <- "Sør-Varanger"
+harv$Kommune[harv$Kommune=="Masoy"]  <- "Måsøy"
 
 # make harvest wide format
 harv2 <- harv %>%
@@ -128,7 +135,7 @@ harv3 <- harv2 %>%
   dplyr::select(!(Kommune)) 
 
 # make empty array
-harv4 <- array(NA, dim = c(339, 24))
+harv4 <- array(NA, dim = c(length(pos_hr), ncol(harv3)))
 
 for(i in 1:length(pos_hr)){
   harv4[i,] <- unlist(harv3[pos_hr[i],])
@@ -149,6 +156,7 @@ carc <- tibble(read.csv2("data/TOTV30062024215135791.csv")) %>%
 plot(carc, type='b')
 
 #----------------------------
+
 # Rodent data
 rodOst <- tibble(read.delim("data/storskala_04-24_spring.txt")) %>% 
   filter(season=="spring") %>%
@@ -210,5 +218,5 @@ input.data$rod = rod3
 input.data$harv = harv4
 
 # save inputdata    
-save(input.data, file = "./data/data_JAGS_2024.rds")
+save(input.data, file = "./data/data_JAGS_2024_v2.rds")
 #- End of Script
