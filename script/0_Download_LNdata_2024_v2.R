@@ -123,23 +123,6 @@ d_obs$locality   <- replace(d_obs$locality,d_obs$locality=="Blåsenborg", "Jarfjo
 d_trans$locality <- replace(d_trans$locality, d_trans$locationID=="73E642A8-13EC-485A-97E7-565695814A09", "Byvann")
 d_obs$locality <- replace(d_obs$locality, d_obs$locationID=="73E642A8-13EC-485A-97E7-565695814A09", "Byvann")
 
-# add column for site
-sitename <- unique(d_obs$locationID)
-clustname <- unique(d_obs$locality)
-regname <- unique(d_obs$verbatimLocality)
-
-d_obs <- d_obs %>%
-  mutate(site=match(locationID, sitename),
-         clust=match(locality, clustname),
-         reg=match(verbatimLocality, regname))
-
-d_trans <- d_trans %>%
-  mutate(site=match(locationID, sitename),
-         clust=match(locality, clustname),
-         reg=match(verbatimLocality, regname))
-
-# how many unique site?
-max(d_obs$site)
 
 # remove transectlines that has been counted less than 5 years
 d_trans2 <- d_trans %>%
@@ -153,12 +136,32 @@ d_obs2 <- d_obs %>%
   semi_join(d_trans2, by = "locationID")
 # this filtering reduced the number of transect lines from 339 to 190 and number of total observations from 5978 to 5423
 
+
+# add column for site
+sitename <- unique(d_obs2$locationID)
+clustname <- unique(d_obs2$locality)
+regname <- unique(d_obs2$verbatimLocality)
+
+d_obs2 <- d_obs2 %>%
+  mutate(site=match(locationID, sitename),
+         clust=match(locality, clustname),
+         reg=match(verbatimLocality, regname))
+
+d_trans2 <- d_trans2 %>%
+  mutate(site=match(locationID, sitename),
+         clust=match(locality, clustname),
+         reg=match(verbatimLocality, regname))
+
+# how many unique site?
+max(d_obs2$site)
+
+
 #---------------------------------------------------------------
 # Save d_trans for use in extracting weather variables 
-save(d_trans2, file="./data/d_trans_2.rds")
+save(d_trans2, file="Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/d_trans_2.rds")
 
 # Save d_obs for summary of observations
-save(d_obs2, file="./data/d_obs_2.rds")
+save(d_obs2, file="Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/d_obs_2.rds")
 #------------------------------------------------------------------------------------------------------------
 #******** End download and processing GBIF data **********************************
 

@@ -1,13 +1,14 @@
 # load covariates and prepare for JAGS
 
 # load info about transect and observations
-load("Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/d_trans.rds")
-load("Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/d_obs.rds")
+load("Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/d_trans_2.rds")
+load("Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/d_obs_2.rds")
+
+d_obs <- d_obs2
+d_trans <- d_trans2
 
 # load spatial covariate (onsetS, max NDVI, OnsetF, Anomaly, rr, tg)
-#all_vars <- tibble(read.csv("./data/all_vars.csv"))
 all_vars <- tibble(read.csv("Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/all_vars_mean_2500m_buffer_phen_to_2024.csv"))
-
 max(all_vars$year)
 
 # manaually replacing names in d_trans to be in line with all_vars
@@ -23,10 +24,10 @@ d_trans$locality <- replace(d_trans$locality, d_trans$locality=="Ifjord-Tana", "
 # fix norwegian letters in all_vars
 unique(all_vars$loc_coat)
 
-all_vars$loc_coat <- replace(all_vars$loc_coat, all_vars$loc_coat=="Hjelms\xf8y", "Hjelmsøy")
+all_vars$loc_coat <- replace(all_vars$loc_coat, all_vars$loc_coat=="Hjelms\xf8y","Hjelmsøy" )
 all_vars$loc_coat <- replace(all_vars$loc_coat, all_vars$loc_coat=="Kj\xe6s", "Kjæs")
 all_vars$loc_coat <- replace(all_vars$loc_coat, all_vars$loc_coat=="Rolvs\xf8y", "Rolvsøy")
-all_vars$loc_coat <- replace(all_vars$loc_coat, all_vars$loc_coat=="S\xf8r\xf8ya", "Sørøya")
+all_vars$loc_coat <- replace(all_vars$loc_coat, all_vars$loc_coat=="S\xf8r\xf8ya", "Sørøya" )
 
 all_sites <- unique(d_trans$locationID)
 all_reg <- unique(d_trans$verbatimLocality)
@@ -205,7 +206,8 @@ N_obs <- dim(d_obs)[1]
 
 #------------------------------------------
 ## Assembling all data in a list for JAGS
-load("data/RypeData_GBIF00-24.rds")
+load("Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/RypeData_GBIF00-24_v2.rds")
+getwd()
 
 input.data$OnsetF = OnsetF2
 input.data$rr = rr2
@@ -217,5 +219,5 @@ input.data$rod = rod3
 input.data$harv = harv4
 
 # save inputdata    
-save(input.data, file = "Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/data_JAGS_2024_v1_2.rds")
+save(input.data, file = "Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/data_JAGS_2024_v2.rds")
 #- End of Script

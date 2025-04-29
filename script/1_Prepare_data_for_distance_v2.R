@@ -6,8 +6,8 @@ library(tidyverse)
 Sys.setlocale("LC_ALL", "no_NO.UTF-8")
 
 # load ptarmigan data
-load("./data/d_trans_2.rds")
-load("./data/d_obs_2.rds")
+load("Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/d_trans_2.rds")
+load("Short-term_forecast_of_Ptarmigan_density_in_Finnmark//data/d_obs_2.rds")
 
 d_obs <- d_obs2
 d_trans <- d_trans2
@@ -277,5 +277,5 @@ input.data <- list(
 )
 
 # save inputdata    
-save(input.data, file = "data/RypeData_GBIF00-24_v2.rds")
+save(input.data, file = "Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/RypeData_GBIF00-24_v2.rds")
 #- end of script

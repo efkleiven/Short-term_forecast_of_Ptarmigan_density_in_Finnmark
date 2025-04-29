@@ -149,13 +149,16 @@ Dreg_4[t] <- mean(c(Dclust_9[t], Dclust_11[t], Dclust_12[t], Dclust_16[t], Dclus
 # total density
 Dtot[t] <- mean(c(Dreg_1[t],Dreg_2[t],Dreg_3[t],Dreg_4[t])) # mean density for all 4 regions  
 Dtot2[t] <- mean(c(Dreg_1[t],Dreg_2[t],Dreg_4[t])) # mean density without pasvik
+
+#mean mu
+mean_mu[t] <- mean(mu[,t])
     } # end time loop
     
  }" #end model
 )
 
 #read data
-load("data/data_JAGS_2024.rds")
+load("data/data_JAGS_2024_v1_2.rds")
 
 # load pre-processed data
 BugsData<-input.data
@@ -244,7 +247,7 @@ inits <- function(){list(N=Nst,sdproctau=runif(1,0,1),sdprectau=runif(1,0,1),alp
 
 # Params to save
 params <- c("btDD", "btR", "btRD", "btDoYf", "btDoYft","btDoYfs", "btharv", "btharvt","btharvs","bttrend",
-            "Ntotal", "mu", "D", "Dtot", "MeanMU", 
+            "Ntotal", "mu", "mean_mu", "bt0", "rCl",
             "Dclust_1", "Dclust_2", "Dclust_3","Dclust_4","Dclust_5","Dclust_6","Dclust_7","Dclust_8","Dclust_9","Dclust_10",
             "Dclust_11", "Dclust_12", "Dclust_13","Dclust_14","Dclust_15","Dclust_16","Dclust_17","Dclust_18","Dclust_19","Dclust_20",
             "Dclust_21", "Dclust_22", "Dclust_23","Dclust_24","Dclust_25","Dclust_26","Dclust_27","Dclust_28","Dclust_29","Dclust_30",

@@ -7,10 +7,9 @@ library(jagsUI)
 # load jagsoutput
 #....
 getwd()
-dir("./output")
 
 # full model with all years
-load("../output/earlymodel_00-24_V3.RData")
+load("./output/earlymodel_00-24.RData")
 
 #---------------------------
 # plot overall mean
@@ -43,6 +42,35 @@ ggplot(dat, aes(x = year))  +
 
 ggsave("plot/Pt_Finnmark_24.png",
        width=30, height=18, units="cm")
+# for mean mu
+
+#---------------------------
+# plot overall mean
+#---------------------------
+# prepare data for ggplot
+mean <- apply(out24$mean_mu, 2, mean)
+low <- apply(out24$mean_mu, 2, function(x) quantile(x, probs = 0.025))
+high <- apply(out24$mean_mu, 2, function(x) quantile(x, probs = 0.975))
+year <- 2000:2024
+
+# store in tibble
+dat <- tibble(mean=mean, low=low, high=high, year=year)
+print(dat, n=25)
+
+# make ggplot
+ggplot(dat, aes(x = year))  + 
+  geom_line(aes(y = mean), color = "#C2B391")+ 
+  geom_ribbon(aes(ymin = low, ymax = high), alpha = 0.5, fill = "#C2B391") + 
+  scale_x_continuous(
+    breaks = c(2000:2024),
+    limits = c(2000, 2024)) + 
+  scale_y_continuous(
+    breaks = c(0:3),
+    limits = c(0,3)) + 
+  ylab(bquote("Average population density " (birds/km^2))) +  
+  theme_bw() + 
+  theme(panel.grid.minor = element_blank(), 
+        axis.text.x = element_text(angle = 45, vjust = 0.75))
 
 #-----------------------------------------------
 # For MU
@@ -53,8 +81,6 @@ high <- apply(apply(exp(out24$mu),c(2,3), mean), 2, quantile, probs=0.975)
 year <- 2000:2024
 
 colMeans(apply(exp(out24$mu), c(2,3), mean))
-
-apply(exp(out24$mu), )
 
 # store in tibble
 dat <- tibble(mean=mean, low=low, high=high, year=year)
@@ -125,7 +151,7 @@ pt_reg %>%
   scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9"))+
   scale_y_continuous(
     breaks = c(seq(0,70, by=5)),
-    limits = c(0,70)) + 
+    limits = c(0,51)) + 
   ylab(bquote("Average population density" (birds/km^2))) +  
   theme_bw() + 
   theme(panel.grid.minor = element_blank(), 
@@ -168,8 +194,8 @@ dat_reg2 %>%
 #       width=30, height=18, units="cm")
 
 #------------------------------------------------------------------------------------------------
-dat_boxplot <- tibble(value=c(out24$btDD-1, out24$btR, out24$btRD,  out24$btharvt, out24$bttrend), #,out24$btDoYft, out24$btMOTHt, out24$btcarc), 
-                      par=c(rep('DD', times=18000), rep('Rod t', times=18000), rep('Rod t-1', times=18000),  rep('Harvest', times=18000), rep('trend', times=18000) )) #rep('OnsetFall', times=18000),, rep('Moth', times=18000), rep('Carcas', times=18000) ))
+dat_boxplot <- tibble(value=c(out24$btDD-1, out24$btR, out24$btRD,  out24$btharvt, out24$btDoYft, out24$bttrend), #, out24$btMOTHt, out24$btcarc), 
+                      par=c(rep('DD', times=18000), rep('Rod t', times=18000), rep('Rod t-1', times=18000),  rep('Harvest', times=18000), rep('OnsetFall', times=18000), rep('trend', times=18000) )) #,, rep('Moth', times=18000), rep('Carcas', times=18000) ))
 
 ggplot(dat_boxplot, aes(y=value, x=par))+
   geom_violin()+
@@ -178,7 +204,7 @@ ggplot(dat_boxplot, aes(y=value, x=par))+
         axis.text.x = element_text(angle = 45, vjust = 0.75),
         axis.title = element_blank())
 
-ggsave("plot/Pt_Finnmark_Cov_24_earlymod_v1.png",
+ggsave("plot/Pt_Finnmark_Cov_24_earlymod.png",
        width=30, height=18, units="cm")
 
 #--------------------------------

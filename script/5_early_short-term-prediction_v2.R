@@ -4,7 +4,7 @@
 
 # Prepare cov data
 # load data
-load("Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/data_JAGS_2024_v1_2.rds")
+load("Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/data_JAGS_2024_v2.rds")
 #load("data/data_JAGS_2024_v1_2.rds")
 
 # rename
@@ -106,13 +106,13 @@ DoYf <- BugsData$DoYf
 # write function to make predictions
 pred <- function(pm, SimT){
   # make empty array
-  logMU <- array(NA,dim=c(339,1))
+  logMU <- array(NA,dim=c(190,1))
   
   # extract last years mu
   MUt <- apply(pm$mu[,,SimT], 2, mean)
   
   # loop to make prediction
-  for(s in 1:339){
+  for(s in 1:190){
     logMU[s] <- pm$bt0[Reg[s]] + 
       pm$rCl[Clust[s]]+ 
       mean(pm$btDD) * MUt[s] + mean(pm$btR) * rod2[SimT+1, Reg[s]] + mean(pm$btRD) * rod2[SimT, Reg[s]] + 
@@ -127,7 +127,7 @@ pred <- function(pm, SimT){
 
 # load jags model
 
-load("./output/earlymodel_00-24.RData") # v2 to get bt0 and rCl
+load("./output/earlymodel_00-24_v2.RData") # v2 to get bt0 and rCl
 
 # make predictions
 #mu20 <- pred(pm=out19, SimT=20)

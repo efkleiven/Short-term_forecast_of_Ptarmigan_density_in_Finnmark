@@ -21,8 +21,11 @@ cat(file= "earlymodel.txt",
   btDD ~ dunif(-10,10)     # density dependence effect
   btR ~ dunif(-10,10)      # rodent effect from year t=2
   btRD ~ dunif(-10,10)     # delayed rodent effect from year t=2
-  btcarc ~ dunif(-10,10)   # carcas effect from year t=2
   bttrend ~ dunif(-10,10)  # trend effect from year t=2
+  
+  btDoYf ~ dunif(-10,10)   # onset of fall residual effect
+  btDoYft ~ dunif(-10,10)  # onset of fall temporal effect
+  btDoYfs ~ dunif(-10,10)  # onset of fall spatial effect
   
   btharv ~ dunif(-10,10)   # havest residual effect
   btharvt ~ dunif(-10,10)  # havest temporal effect
@@ -91,7 +94,8 @@ cat(file= "earlymodel.txt",
       logD[s,t] ~ dnorm( mu[s,t] , PrOc )
       
       mu[s,t] <- bt0[Reg[s]] + rCl[Clust[s]]+ btDD * mu[s,t-1] + btR * rod[t, Reg[s]] + btRD * rod[t-1, Reg[s]] + 
-      btharv * harv[s, t-1] + btharvt * harvt[t-1] + btharvs * harvs[s] + bttrend * (t-1)
+                 btDoYf * DoYf[Clust[s], t-1] + btDoYft * DoYft[t-1] + btDoYfs * DoYfs[Clust[s]] +
+                 btharv * harv[s, t-1] + btharvt * harvt[t-1] + btharvs * harvs[s] + bttrend * (t-1)
       
       D[s,t] <- exp(logD[s,t])
       
@@ -144,16 +148,22 @@ Dreg_4[t] <- mean(c(Dclust_9[t], Dclust_11[t], Dclust_12[t], Dclust_16[t], Dclus
 # total density
 Dtot[t] <- mean(c(Dreg_1[t],Dreg_2[t],Dreg_3[t],Dreg_4[t])) # mean density for all 4 regions  
 Dtot2[t] <- mean(c(Dreg_1[t],Dreg_2[t],Dreg_4[t])) # mean density without pasvik
+
+#mean mu
+mean_mu[t] <- mean(mu[,t])
     } # end time loop
     
  }" #end model
 )
 
 #read data
-load("data/data_JAGS_2024.rds")
+load("Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/data_JAGS_2024_v2.rds")
 
 # load pre-processed data
 BugsData<-input.data
+
+max(BugsData$site)
+str(BugsData)
 
 # remove objects not needed
 BugsData$VerbClust <- NULL
@@ -239,7 +249,7 @@ inits <- function(){list(N=Nst,sdproctau=runif(1,0,1),sdprectau=runif(1,0,1),alp
 
 # Params to save
 params <- c( "btDD", "btR", "btRD", "btDoYf", "btDoYft","btDoYfs", "btharv", "btharvt","btharvs","bttrend",
-            "Ntotal", "mu", "D", "Dtot", "MeanMU", "bt0", "rCl", 
+            "Ntotal", "mu", "D", "Dtot", "mean_mu", "bt0", "rCl", 
             "Dclust_1", "Dclust_2", "Dclust_3","Dclust_4","Dclust_5","Dclust_6","Dclust_7","Dclust_8","Dclust_9","Dclust_10",
             "Dclust_11", "Dclust_12", "Dclust_13","Dclust_14","Dclust_15","Dclust_16","Dclust_17","Dclust_18","Dclust_19","Dclust_20",
             "Dclust_21", "Dclust_22", "Dclust_23","Dclust_24","Dclust_25","Dclust_26","Dclust_27","Dclust_28","Dclust_29","Dclust_30",
@@ -247,6 +257,7 @@ params <- c( "btDD", "btR", "btRD", "btDoYf", "btDoYft","btDoYfs", "btharv", "bt
 
 #MCMC settings
 ni <- 60000;   nb <- 30000;   nt <- 10;   nc <- 6;  na=10000 #
+#ni <- 60;   nb <- 30;   nt <- 1;   nc <- 1 #
 
 library(jagsUI)
 
@@ -258,6 +269,6 @@ out24 <- jags(BugsData, inits, params, "earlymodel.txt", n.thin=nt,
 out24 <- out24$sims.list
 
 # save output
-save(out24, file="output/earlymodel_00-24_V3.RData")
+save(out24, file="output/earlymodel_00-24_v2.RData")
 
 #- the end of script
