@@ -1,14 +1,18 @@
 # load covariates and prepare for JAGS
+# v.4 - forecast made in early july
+# updated 10.7.2025
 
 # load info about transect and observations
-load("Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/d_trans_2.rds")
-load("Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/d_obs_2.rds")
+load("data/d_trans_3.rds")
+load("data/d_obs_3.rds")
 
-d_obs <- d_obs2
-d_trans <- d_trans2
+d_obs <- d_obs3
+d_trans <- d_trans3
+
+dir("data")
 
 # load spatial covariate (onsetS, max NDVI, OnsetF, Anomaly, rr, tg)
-all_vars <- tibble(read.csv("Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/all_vars_mean_2500m_buffer_phen_to_2024.csv"))
+all_vars <- tibble(read.csv("data/all_vars_mean_2500m_buffer_July2025.csv"))
 max(all_vars$year)
 
 # manaually replacing names in d_trans to be in line with all_vars
@@ -57,6 +61,11 @@ for(i in 1:nrow(OnsetF)){
   OnsetF2[i,] <- unlist(OnsetF[i,])
 }
 
+# plot onset of fall
+plot(colMeans(OnsetF2)~c(2000:2024), type='b')
+
+OnsetF2 <- OnsetF2[,-26]
+
 # make array with mean rr for each cluster
 rr <- all_vars %>%
   group_by(year, clust) %>%
@@ -86,6 +95,38 @@ for(i in 1:nrow(tg)){
   tg2[i,] <- unlist(tg[i,])
 }
 
+# Assuming tg2 is your 27x26 matrix
+# Each column is a year
+
+# Step 1: Compute column means and standard deviations
+year_means <- colMeans(tg2, na.rm = TRUE)
+year_sd <- apply(tg2, 2, sd, na.rm = TRUE)
+
+# Step 2: Create a basic plot
+years <- 2000:2025  # Replace with actual years if available
+plot(years, year_means, type = "b", pch = 19, ylim = range(c(year_means - year_sd, year_means + year_sd)),
+     xlab = "Year", ylab = "Mean ± SD", main = "Yearly Mean tg")
+
+# Step 3: Add error bars
+arrows(years, year_means - year_sd, years, year_means + year_sd,
+       angle = 90, code = 3, length = 0.05)
+
+# plot rr
+
+# Step 1: Compute column means and standard deviations
+year_means <- colMeans(rr2, na.rm = TRUE)
+year_sd <- apply(rr2, 2, sd, na.rm = TRUE)
+
+# Step 2: Create a basic plot
+years <- 2000:2025  # Replace with actual years if available
+plot(years, year_means, type = "b", pch = 19, ylim = range(c(year_means - year_sd, year_means + year_sd)),
+     xlab = "Year", ylab = "Mean ± SD", main = "Yearly Mean rr")
+
+# Step 3: Add error bars
+arrows(years, year_means - year_sd, years, year_means + year_sd,
+       angle = 90, code = 3, length = 0.05)
+
+
 # make array with mean anom for each cluster
 anom <- all_vars %>%
   group_by(year, clust) %>%
@@ -102,8 +143,28 @@ for(i in 1:nrow(anom)){
 
 # replace NA with 0
 anom2[is.na(anom2)] <- 0.01 # should I replace with 0 or mean(anom2, na.rm=T)?
+ dim(anom2)
 
-# harvest 
+ # remove year with no data
+anom2 <- anom2[,-26]
+ 
+ scale(colMeans(anom2))
+plot(colMeans(anom2))
+
+# Step 1: Compute column means and standard deviations
+year_means <- colMeans(anom2, na.rm = TRUE)
+year_sd <- apply(anom2, 2, sd, na.rm = TRUE)
+
+# Step 2: Create a basic plot
+years <- 2000:2024  # Replace with actual years if available
+plot(years, year_means, type = "b", pch = 19, ylim = range(c(year_means - year_sd, year_means + year_sd)),
+     xlab = "Year", ylab = "Mean ± SD", main = "Yearly Mean anomaly")
+
+# Step 3: Add error bars
+arrows(years, year_means - year_sd, years, year_means + year_sd,
+       angle = 90, code = 3, length = 0.05)
+
+ # harvest 
 harv <- tibble(read.delim("./data/HarvestTotal2000-2024.txt")) %>%
   mutate(harv = FelteWpt/Areal) %>%
   dplyr::select(!c(Region, Jaktdager, Areal, FelteWpt))
@@ -151,14 +212,38 @@ carc <- tibble(read.csv2("data/TOTV30062024215135791.csv")) %>%
   group_by(year) %>%
   summarise(carc = sum(Antall))
 
+print(carc, n=50)
+
 # checking that the formatting works
 # compared to henden et al, and its similar
 plot(carc, type='b')
+dir("data")
+
+library(readxl)
+library(dplyr)
+library(lubridate)
+library(tibble)
+
+carc25 <- read_excel("data/kadaver_2025.xlsx") %>%
+  as_tibble() %>%
+  filter(Skadetype == "Rein") %>% 
+  mutate(
+    year = year(Funnetdato),
+    month = month(Funnetdato)
+  )%>%
+  filter(month %in% c(1:6) & year == 2025)%>%
+  dplyr::select(year, Antall)%>%
+  group_by(year) %>%
+  summarise(carc = sum(Antall))
+
+carc <- rbind(carc,carc25)
+plot(carc, type='b')
 
 #----------------------------
-
 # Rodent data
-rodOst <- tibble(read.delim("data/storskala_04-24_spring.txt")) %>% 
+
+# East
+rodOst <- tibble(read.delim("data/storskala_04-25_spring.txt")) %>% 
   filter(season=="spring") %>%
   mutate(rod=Mruf)%>%
   dplyr::select(c(year, rod))%>%
@@ -170,43 +255,50 @@ rodOst2 <- tibble(year=2000:2003, rodO=rep(mean(rodOst$rodO), times=4))
 
 # bind replace missing data to the real dataset
 rodOst3 <- rbind(rodOst2, rodOst)
+print(rodOst3, n=1000)
 
 # make year a character
 rodOst3$year <- as.character(rodOst3$year)
 
 #Inner
-rodInner <- tibble(read.table("data/karmassumS.csv", sep=",", header=T)) %>%
+rodInnerVest <- tibble(read.table("data/porsanger_mus_reg_2025.csv", sep=",", header=T)) %>%
   filter(seas=="SPRING")%>%
-  dplyr::select(c(year,  rufocanus))
+  dplyr::select(c(year,  rufoCold, rufoSold))
 
 # make year a character
-rodInner$year <- as.character(rodInner$year) 
+rodInnerVest$year <- as.character(rodInnerVest$year) 
 
 # West  
-rodwest <- tibble(read.table("data/karmassumC.csv", sep=",", header=T)) %>%
-  filter(seas=="SPRING")%>%
-  dplyr::select(c(year,  rufocanus))
-
-# make year a character
-rodwest$year <- as.character(rodwest$year) 
-
-rod1 <- rodInner %>% 
-  right_join( rodwest,  by=join_by(year))%>%
-  right_join( rodOst3,  by=join_by(year))%>%
+rod1 <- rodOst3 %>% 
+  right_join( rodInnerVest,  by=join_by(year))%>%
   left_join( rodOst3,   by=join_by(year))%>%
   dplyr::select(!year)%>% as.matrix()
 
 # scale and put in array
-rod3 <- scale(array(rod1, dim=c(25,4)))
-#-----------------------------------------
+# should scale columns seperatly
+rod3 <- scale(array(as.numeric(rod1), dim=c(26,4)))
 
+# Sample year labels (replace with your actual years if needed)
+years <- 2000:2025  # Assuming 26 years
+
+# Create the plot
+matplot(years, rod1, type = "l", lty = 1, lwd = 2,
+        col = 1:4, xlab = "Year", ylab = "Value",
+        main = "Trends by Area")
+
+# Add a legend
+legend("topright", legend = paste("Area", 1:4), col = 1:4, lty = 1, lwd = 2)
+
+
+
+#---------------
 W=200
 nD <- 8; delta=W/nD; midpt = seq(delta/2, W, delta)
 N_obs <- dim(d_obs)[1]
 
 #------------------------------------------
 ## Assembling all data in a list for JAGS
-load("Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/RypeData_GBIF00-24_v2.rds")
+load("data/RypeData_GBIF00-24_v3.rds")
 getwd()
 
 input.data$OnsetF = OnsetF2
@@ -219,5 +311,5 @@ input.data$rod = rod3
 input.data$harv = harv4
 
 # save inputdata    
-save(input.data, file = "Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/data_JAGS_2024_v2.rds")
+save(input.data, file = "data/data_JAGS_2024_v4.rds")
 #- End of Script

@@ -7,7 +7,7 @@ library(tidyverse)
 
 setwd("/data/P-Prosjekter2/182411_20_rypemodul_finnmark")
 
-cat(file= "fullmodel.txt", 
+cat(file= "earlymodel.txt", 
 "model{
 
   # Priors
@@ -21,29 +21,29 @@ cat(file= "fullmodel.txt",
   btDD ~ dunif(-10,10)     # density dependence effect
   btR ~ dunif(-10,10)      # rodent effect from year t=2
   btRD ~ dunif(-10,10)     # delayed rodent effect from year t=2
-  btcarc ~ dunif(-10,10)   # carcas effect from year t=2
   bttrend ~ dunif(-10,10)  # trend effect from year t=2
+  btcarc ~ dunif(-10,10)
   
   btDoYf ~ dunif(-10,10)   # onset of fall residual effect
   btDoYft ~ dunif(-10,10)  # onset of fall temporal effect
   btDoYfs ~ dunif(-10,10)  # onset of fall spatial effect
   
-  btMOTH ~ dunif(-10,10)    # moth residual effect
-  btMOTHt ~ dunif(-10,10)   # moth temporal effect 
-  btMOTHs ~ dunif(-10,10)   # moth spatial effect 
+  #btMOTH ~ dunif(-10,10)    # moth residual effect
+  #btMOTHt ~ dunif(-10,10)   # moth temporal effect 
+  #btMOTHs ~ dunif(-10,10)   # moth spatial effect 
   
   btharv ~ dunif(-10,10)   # havest residual effect
   btharvt ~ dunif(-10,10)  # havest temporal effect
   btharvs ~ dunif(-10,10)  # harvest spatial effect
   
-  #btrr ~ dunif(-10,10)   # precipitaion residual effect
-  #btrrt ~ dunif(-10,10)  # precipitaion temporal effect
-  #btrrs ~ dunif(-10,10)  # precipitaion spatial effect
+  #btrr ~ dunif(-10,10)   # havest residual effect
+  #btrrt ~ dunif(-10,10)  # havest temporal effect
+  #btrrs ~ dunif(-10,10)  # harvest spatial effect
   
-  #bttg ~ dunif(-10,10)   # temperatur residual effect
-  #bttgt ~ dunif(-10,10)  # temperatur temporal effect
-  #bttgs ~ dunif(-10,10)  # temperatur spatial effect
-  
+  #bttg ~ dunif(-10,10)   # havest residual effect
+  #bttgt ~ dunif(-10,10)  # havest temporal effect
+  #bttgs ~ dunif(-10,10)  # harvest spatial effect
+
     #regional fixed effects
   for(r in 1:4){
     bt0[r] ~ dunif(-10,10)  # regional fixed effect (T>1)
@@ -104,16 +104,17 @@ cat(file= "fullmodel.txt",
       y[s,t] ~ dbin(pcap[s], N[s,t])        
       N[s,t] ~ dpois(lambda[s,t])  
       lambda[s,t] <- D[s,t] * area[s,t]
-      D[s,t] <- exp(logD[s,t])
-      logD[s,t] ~ dnorm( mu[s,t] , PrOc )
       
       mu[s,t] <- bt0[Reg[s]] + rCl[Clust[s]]+ btDD * mu[s,t-1] + btR * rod[t, Reg[s]] + btRD * rod[t-1, Reg[s]] + 
-      btDoYf * DoYf[Clust[s], t-1] + btDoYft * DoYft[t-1] + btDoYfs * DoYfs[Clust[s]] +
-      btMOTH * moth[Clust[s], t-1] + btMOTHt * motht[t-1] + btMOTHs * moths[Clust[s]] +
-      btharv * harv[s, t-1] + btharvt * harvt[t-1] + btharvs * harvs[s] +
-      btcarc * carc[t] + bttrend * (t-1)
-      
-      
+                 btDoYf * DoYf[Clust[s], t-1] + btDoYft * DoYft[t-1] + btDoYfs * DoYfs[Clust[s]] +
+                 #btMOTH * moth[Clust[s], t-1] + btMOTHt * motht[t-1] + btMOTHs * moths[Clust[s]] +
+                 btharv * harv[s, t-1] + btharvt * harvt[t-1] + btharvs * harvs[s] +
+                 #btrr * rr[Clust[s], t] + btrrt * rrt[t] + btrrs * rrs[Clust[s]] +
+                 #bttg * tg[Clust[s], t] + bttgt * tgt[t] + bttgs * tgs[Clust[s]] +
+                 btcarc * carc[t] + bttrend * (t-1)
+                 
+      logD[s,t] ~ dnorm( mu[s,t] , PrOc )
+      D[s,t] <- exp(logD[s,t])
       
     }  # End pop dynamics subsequent years
   } # End likelihood
@@ -151,29 +152,33 @@ cat(file= "fullmodel.txt",
     Dclust_25[t] <- mean(D[clust_id_25, t])
     Dclust_26[t] <- mean(D[clust_id_26, t])
     Dclust_27[t] <- mean(D[clust_id_27, t])
-    Dclust_28[t] <- mean(D[clust_id_28, t])
-    Dclust_29[t] <- mean(D[clust_id_29, t])
-    Dclust_30[t] <- mean(D[clust_id_30, t])
+
     
 # mean region density
-Dreg_1[t] <- mean(c(Dclust_1[t], Dclust_5[t], Dclust_6[t], Dclust_10[t], Dclust_13[t], Dclust_14[t], Dclust_15[t], Dclust_18[t], Dclust_25[t], Dclust_27[t], Dclust_28[t])) # indre finnmark
-Dreg_2[t] <- mean(c(Dclust_2[t], Dclust_4[t], Dclust_7[t], Dclust_8[t], Dclust_17[t], Dclust_20[t], Dclust_23[t], Dclust_26[t]))                                            # vest finnmark
+Dreg_1[t] <- mean(c(Dclust_1[t], Dclust_5[t], Dclust_8[t], Dclust_9[t], Dclust_10[t], Dclust_13[t], Dclust_15[t], Dclust_21[t], Dclust_22[t], Dclust_24[t], Dclust_25[t])) # indre finnmark
+Dreg_2[t] <- mean(c(Dclust_2[t], Dclust_4[t], Dclust_7[t], Dclust_12[t], Dclust_23[t]))                                            # vest finnmark
 Dreg_3[t] <- mean(c(Dclust_3[t]))                                                                                                                                           # pasvik
-Dreg_4[t] <- mean(c(Dclust_9[t], Dclust_11[t], Dclust_12[t], Dclust_16[t], Dclust_19[t], Dclust_21[t], Dclust_22[t], Dclust_24[t], Dclust_29[t], Dclust_30[t]))             # ?st finnmark
+Dreg_4[t] <- mean(c(Dclust_6[t], Dclust_11[t], Dclust_14[t], Dclust_16[t], Dclust_17[t], Dclust_18[t], Dclust_19[t], Dclust_20[t], Dclust_26[t], Dclust_27[t]))             # øst finnmark
 
 # total density
 Dtot[t] <- mean(c(Dreg_1[t],Dreg_2[t],Dreg_3[t],Dreg_4[t])) # mean density for all 4 regions  
 Dtot2[t] <- mean(c(Dreg_1[t],Dreg_2[t],Dreg_4[t])) # mean density without pasvik
+
+#mean mu
+mean_mu[t] <- mean(mu[,t])
     } # end time loop
     
  }" #end model
 )
 
 #read data
-load("data/data_JAGS_2024.rds")
+load("Short-term_forecast_of_Ptarmigan_density_in_Finnmark/data/data_JAGS_2024_v4.rds")
 
 # load pre-processed data
 BugsData<-input.data
+
+max(BugsData$site)
+str(BugsData)
 
 # remove objects not needed
 BugsData$VerbClust <- NULL
@@ -208,9 +213,7 @@ BugsData$clust_id_24 <- which(input.data$Clust==24)
 BugsData$clust_id_25 <- which(input.data$Clust==25)
 BugsData$clust_id_26 <- which(input.data$Clust==26)
 BugsData$clust_id_27 <- which(input.data$Clust==27)
-BugsData$clust_id_28 <- which(input.data$Clust==28)
-BugsData$clust_id_29 <- which(input.data$Clust==29)
-BugsData$clust_id_30 <- which(input.data$Clust==30)
+
 
 # which reg does the clusters correspond too
 # Get unique Clust values
@@ -224,10 +227,13 @@ matched_reg <- sapply(unique_clust, function(clust_value) {
 # Print result
 df <- data.frame(Clust = unique_clust, Reg = matched_reg)
 
-which(df$Reg==1)
-which(df$Reg==2)
-which(df$Reg==3)
-which(df$Reg==4)
+which(df$Reg==1) # inner
+which(df$Reg==2) # west
+which(df$Reg==3) # pasvik
+which(df$Reg==4) # east
+
+# reorganize rodent data to match regions
+BugsData$rod <- BugsData$rod[, c(3, 2, 1, 4)]
 
 ### Standardize predictor variables
 library(AHMbook)
@@ -240,26 +246,11 @@ BugsData$harvt <- standardize(colMeans(BugsData$harv))
 BugsData$harvs <- standardize(rowMeans(BugsData$harv))
 BugsData$harv <- standardize(BugsData$harv)
 
-# scale rr
-BugsData$rrt <- standardize(colMeans(BugsData$rr))
-BugsData$rrs <- standardize(rowMeans(BugsData$rr))
-BugsData$rr <- standardize(BugsData$rr)
-
-# scale tg
-BugsData$tgt <- standardize(colMeans(BugsData$tg))
-BugsData$tgs <- standardize(rowMeans(BugsData$tg))
-BugsData$tg <- standardize(BugsData$tg)
-
-# scale anom
-BugsData$motht <- standardize(colMeans(BugsData$anom))
-BugsData$moths <- standardize(rowMeans(BugsData$anom))
-BugsData$moth <- standardize(BugsData$anom)
-
 #scale carc
 BugsData$carc <- standardize(BugsData$carc$carc)
 
 # define number of years in the dataset
-#BugsData$T <- dim(BugsData$y)[2]
+BugsData$T <- dim(BugsData$y)[2]-4 # include only data until 2020
 
 # Spesify initial values for MCMC
 SimT = BugsData$T
@@ -270,13 +261,12 @@ Nst <- BugsData$y[,1:SimT] # for no of individuals
 inits <- function(){list(N=Nst,sdproctau=runif(1,0,1),sdprectau=runif(1,0,1),alpha0=0, 
                          bt0=array(0, dim=c(4)), btf0=rep(0,times=4), btDD=0, 
                          btfR=0, btR=0, btRD=0, btDoYf=0, btDoYft=0, btDoYfs=0,
-                         btharv=0, btharvt=0, btharvs=0, btcar=0, bttrend=0,
-                         btrr=0, btrrt=0, btrrs=0, bttg=0, bttgt=0, bttgs=0)}      
+                         btcarc=0,
+                         btharv=0, btharvt=0, btharvs=0, bttrend=0)}      
 
 # Params to save
-params <- c("btDD", "btR", "btRD", "btDoYf", "btDoYft","btDoYfs", "btMOTH", "btMOTHt", "btMOTHs", 
-            "btharv", "btharvt","btharvs","btrr", "btrrt","btrrs","bttg", "bttgt","bttgs","btcarc","bttrend",
-            "Ntotal", "mu", "D", "Dtot", "MeanMU", 
+params <- c( "btDD", "btR", "btRD", "btDoYf", "btDoYft","btDoYfs", "btharv", "btharvt","btharvs","bttrend","btcarc",
+            "Ntotal", "mu", "D", "Dtot", "mean_mu", "bt0", "rCl", 
             "Dclust_1", "Dclust_2", "Dclust_3","Dclust_4","Dclust_5","Dclust_6","Dclust_7","Dclust_8","Dclust_9","Dclust_10",
             "Dclust_11", "Dclust_12", "Dclust_13","Dclust_14","Dclust_15","Dclust_16","Dclust_17","Dclust_18","Dclust_19","Dclust_20",
             "Dclust_21", "Dclust_22", "Dclust_23","Dclust_24","Dclust_25","Dclust_26","Dclust_27","Dclust_28","Dclust_29","Dclust_30",
@@ -284,17 +274,17 @@ params <- c("btDD", "btR", "btRD", "btDoYf", "btDoYft","btDoYfs", "btMOTH", "btM
 
 #MCMC settings
 ni <- 60000;   nb <- 30000;   nt <- 10;   nc <- 6;  na=10000 #
+#ni <- 60;   nb <- 30;   nt <- 1;   nc <- 1 #
 
 library(jagsUI)
 
 # run model in JAGS
-out24 <- jags(BugsData, inits, params, "fullmodel.txt", n.thin=nt,
+out_early_20 <- jags(BugsData, inits, params, "earlymodel.txt", n.thin=nt,
                  n.chains=nc, n.burnin=nb, n.adapt=na, n.iter=ni, parallel=T)   # 
 
 # keep only MCMC values
-out24 <- out24$sims.list
+out_early_20 <- out_early_20$sims.list
 
 # save output
-save(out24, file="output/fullmodel_00-24.RData")
-
+save(out_early_20, file="output/early_00-20.RData")
 #- the end of script

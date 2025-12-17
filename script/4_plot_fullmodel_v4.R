@@ -9,7 +9,7 @@ library(jagsUI)
 getwd()
 
 # full model with all years
-load("./output/earlymodel_00-24.RData")
+load("./output/earlymodel_00-24_v4.RData")
 
 #---------------------------
 # plot overall mean
@@ -138,6 +138,8 @@ pt_reg <- tibble(mean=c(mean1,mean2,mean3,mean4),
 # explains why ptarmigan numbers did not decline last year
 #(mean1+mean2+mean4)/3
 
+pt_reg$reg[pt_reg$reg=="Ã\u0098st"] <- "Øst"
+
 # make regional plot 
 pt_reg %>%
   filter(!reg=="Pasvik") %>%
@@ -147,7 +149,7 @@ pt_reg %>%
   scale_x_continuous(
     breaks = c(2000:2024),
     limits = c(1999.5, 2024.5)) + 
-  scale_colour_manual(values = c("Indre" = "#999999", "Vest" = "#56B4E9", "ost"="#E69F00"))+
+  scale_colour_manual(values = c("Indre" = "#999999", "Vest" = "#56B4E9", "Øst"="#E69F00"))+
   scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9"))+
   scale_y_continuous(
     breaks = c(seq(0,70, by=5)),
@@ -194,8 +196,8 @@ dat_reg2 %>%
 #       width=30, height=18, units="cm")
 
 #------------------------------------------------------------------------------------------------
-dat_boxplot <- tibble(value=c(out24$btDD-1, out24$btR, out24$btRD,  out24$btharvt, out24$btDoYft, out24$bttrend), #, out24$btMOTHt, out24$btcarc), 
-                      par=c(rep('DD', times=18000), rep('Rod t', times=18000), rep('Rod t-1', times=18000),  rep('Harvest', times=18000), rep('OnsetFall', times=18000), rep('trend', times=18000) )) #,, rep('Moth', times=18000), rep('Carcas', times=18000) ))
+dat_boxplot <- tibble(value=c(out24$btDD-1, out24$btR, out24$btRD,  out24$btharvt, out24$btDoYft,out24$btMOTHt, out24$bttrend), #, out24$btMOTHt, out24$btcarc), 
+                      par=c(rep('DD', times=18000), rep('Rod t', times=18000), rep('Rod t-1', times=18000),  rep('Harvest', times=18000), rep('OnsetFall', times=18000),rep('moth', times=18000), rep('trend', times=18000) )) #,, rep('Moth', times=18000), rep('Carcas', times=18000) ))
 
 ggplot(dat_boxplot, aes(y=value, x=par))+
   geom_violin()+
@@ -233,6 +235,21 @@ dat_boxplot <- tibble(value = c(out24$btharv, out24$btharvt, out24$btharvs),
 ggplot(dat_boxplot, aes(y=value, x=par))+
   geom_violin()+
   ggtitle("Harvest") +                    # Add main title
+  theme(axis.title.x = element_blank(),         # Remove x-axis title
+        axis.title.y = element_blank(),         # Remove y-axis title
+        axis.text.x = element_text(size = 14),  # Increase x-axis text size
+        axis.text.y = element_text(size = 14),  # Increase y-axis text size
+        plot.title = element_text(size = 20))+  # Increase title size
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red", size = 1)  # Add horizontal dashed line at y = 0 
+
+
+# look at spatial and temporal components of moth effects
+dat_boxplot <- tibble(value = c(out24$btMOTH, out24$btMOTHt, out24$btMOTHs), 
+                      par=c(rep('Residual', times=18000),rep('temporal', times=18000), rep('spatial', times=18000) ))
+
+ggplot(dat_boxplot, aes(y=value, x=par))+
+  geom_violin()+
+  ggtitle("Moth") +                    # Add main title
   theme(axis.title.x = element_blank(),         # Remove x-axis title
         axis.title.y = element_blank(),         # Remove y-axis title
         axis.text.x = element_text(size = 14),  # Increase x-axis text size
